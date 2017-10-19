@@ -1,0 +1,81 @@
+Improve existing functionals:
+  *) Add XC_FLAGS_STABLE or XC_FLAGS_DEVELOPMENT to all functionals in libxc.
+
+Add functionals:
+
+LDA:
+  *) McWeeny c (cited in JCP 69, 1177)
+     R. McWeeny, in The New World of Quantum Chemistry, edited by B. Pullman and R. Parr (Reidel, Boston, 1976), p. 3.
+  *) Handler x (JCP 61, 4824) 
+  *) Rae self-energy correction to x (CPL 18, 574 (1973))
+  *) ZLP x (Phys. Rev. A, 47 (1993), p. 918) and k (Chem. Phys. Lett. 232, 31)
+  *) Proynov-Kong c [Phys. Rev. A 79, 014103 (2009)] http://journals.aps.org/pra/abstract/10.1103/PhysRevA.79.014103
+
+GGAs:
+  *) D.J. Tozer, N.C. Handy, Recent advances in density functional theory, Vol.2  (http://dx.doi.org/10.1142/9789812819468_0001)
+  *) functionals of Della Salla (http://www.theory-nnl.it/software.php)
+  *) Liu and Parr (http://pra.aps.org/abstract/PRA/v55/i3/p1792_1)
+  *) http://dx.doi.org/10.1063/1.3243845
+  *) df-LB94, df-revLB94 http://dx.doi.org/10.1103/PhysRevA.83.012509
+  *) Lambda-LB94, Q-LB94, Q-revLB94  http://dx.doi.org/10.1063/1.3684261
+  *) Gilbert and Gill c [CPL 312, 511 (1999)] http://www.sciencedirect.com/science/article/pii/S0009261499008362
+  *) BNL (Baer-Neuhauser-Livshits) [Phys. Rev. Lett. 94, 043002 (2005) and Phys. Chem. Chem. Phys. 9, 2932 (2007)] http://journals.aps.org/prl/abstract/10.1103/PhysRevLett.94.043002 and http://pubs.rsc.org/en/content/articlelanding/2007/cp/b617919c
+  *) zvPBEint and zvPBEsol http://scitation.aip.org/content/aip/journal/jcp/137/19/10.1063/1.4766324
+  *) GAPc and GAPloc http://pubs.acs.org/doi/full/10.1021/ct500073b
+  *) B97GGA-1 and B97-1b (A.J.Cohen,N.C.Handy, Chem.Phys.Lett., 316,160 (2000)) This is a different version of B97-1!!!
+  *) B98-1, and VS98-1	(A.J.Cohen,N.C.Handy, Chem.Phys.Lett., 316,160 (2000))
+  *) GDS08 KED functional http://dx.doi.org/10.1103/PhysRevB.77.073104
+  *) GHDS10 KED functional http://dx.doi.org/10.1063/1.3280953
+  *) GHDS10 reparametrized and TKVln http://dx.doi.org/10.1103/PhysRevB.84.075146
+  *) SG4 http://dx.doi.org/10.1103/PhysRevB.93.045126
+  *) PBE2, PBE3, PBE4 and exp4 KED functionals http://dx.doi.org/10.1007/s10820-006-9019-8  http://dx.doi.org/10.1103/PhysRevB.80.245120
+
+mGGAs:
+  *) Bc98 in http://scitation.aip.org/content/aip/journal/jcp/88/2/10.1063/1.454274
+  *) hybrids in http://scitation.aip.org/content/aip/journal/jcp/112/9/10.1063/1.480951
+  *) tau-PBE (http://scitation.aip.org/content/aip/journal/jcp/111/3/10.1063/1.479374)
+  *) ISM (http://scitation.aip.org/content/aip/journal/jcp/116/15/10.1063/1.1462618)
+  *) KCIS, B0KCIS, B1KCIS http://jcp.aip.org/resource/1/jcpsa6/v117/i23/p10465_s1
+  *) LAP class of functionals [70]
+  *) PK06 (part of the LAP class of functionals) http://dx.doi.org/10.1021/ct600372t
+  *) Perdew-Constantin laplacian-level KED functional http://link.aps.org/doi/10.1103/PhysRevB.75.155109
+  *) Alternative parametrizations of the TB09 functional http://dx.doi.org/10.1103/PhysRevB.85.155109
+  *) MCY1 and MCY2 http://dx.doi.org/10.1063/1.2179072
+  *) http://www.sciencedirect.com/science/article/pii/S0009261412007117
+  *) spin-polarized Colle-Salvetti -type correlation http://www.sciencedirect.com/science/article/pii/S0009261497002017
+  *) B94 [A. D. Becke, Int. J. Quantum Chem. Symp. 28, 625 (1994) and  E. Proynov, Z. Gan, and J. Kong, Chem. Phys. Lett. 455, 103 (2008)]
+  *) SA-TPSS http://dx.doi.org/10.1103/PhysRevB.93.115127
+  *) Laplacian-level KED functional from Salazar et al http://dx.doi.org/10.1002/qua.25179
+
+hybrids:
+  *) doi:10.1021/ct800530u (LR-omegaPBE08)
+  *) http://dx.doi.org/10.1021/ct300715s
+  *) (CAM-)S12g / (CAM-)S12h http://www.sciencedirect.com/science/article/pii/S0009261413008221
+  *) HISS http://scitation.aip.org/content/aip/journal/jcp/127/22/10.1063/1.2822021 [*two* range separation constants!)
+  *) hAPBE DOI: 10.1021/ct500902p
+
+hybrid meta:
+  *) TPSS1KCIS http://pubs.rsc.org/en/content/articlelanding/2005/cp/b416937a
+  *) MPWKCIS1K MPW1KCIS http://pubs.acs.org/doi/pdf/10.1021/jp045141s
+  *) PBE1KCIS http://pubs.acs.org/doi/pdf/10.1021/ct049851d
+  *) b1b95 (54, 60)
+  *) tpsslyp1w (1w class of functionals)
+  
+check also "local" hybrids?
+V. V. Karasiev, J. Mol. Struct. (THEOCHEM), 493, 21 (1999).
+V. V. Karasiev and E. V. Ludeña, Phys. Rev. A 65, 062510 (2002).
+V. V. Karasiev and E. V. Ludeña, Phys. Rev. A 65, 032515 (2002).
+
+
+54: Becke, A. D. Phys. ReV. A 1988, 38, 3098.
+60: Becke, A. D. J. Chem. Phys. 1996, 104, 1040.
+67: Rey, J.; Savin, A. Int. J. Quantum Chem. 1998, 69, 581.
+68: Kreiger, J. B.; Chen, J.; Iafrate, G. J.; Savin, A. In Electronic
+    Correlations and Materials Properties; Gonis, A., Kioussis, N., Eds;
+    Plenum: New York, 1999; p 463.
+    http://dx.doi.org/10.1007/978-1-4615-4715-0_28
+69: Toulouse, J.; Savin, A.; Adamo, C. J. Chem. Phys. 2002, 117, 1441.
+70: http://dx.doi.org/10.1016/0009-2614(94)01189-3
+    http://dx.doi.org/10.1002/qua.560560808
+    http://dx.doi.org/10.1002/(SICI)1097-461X(1997)64:4<427::AID-QUA5>3.0.CO;2-Y
+    http://link.aip.org/link/doi/10.1063/1.1321309

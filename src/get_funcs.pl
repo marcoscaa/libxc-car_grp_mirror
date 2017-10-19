@@ -1,0 +1,440 @@
+#!/usr/bin/env perl
+
+# Copyright (C) 2006-2007 M.A.L. Marques
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#  
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#  
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+if(@ARGV < 2) {
+    print STDERR "Usage: get_funcs.pl srcdir builddir\n";
+    exit(1);
+}
+
+$srcdir = shift;
+$builddir = shift;
+
+my @funcs = ("lda", "gga", "hyb_gga", "mgga", "hyb_mgga");
+my %all_ids;
+
+open(DOCS, ">$builddir/libxc_docs.txt") or die("Could not open '$builddir/libxc_docs.txt.'\n");
+
+$s0 = ""; $s3 = ""; $s4 = ""; $s5 = ""; $xc_set_params = "";
+$publiclist = ""; $xclist = ""; $fxclist = ""; $xcf90list = ""; $xcfclist = "";
+
+foreach $func (@funcs){
+  undef %deflist_f;
+  undef %deflist_c;
+  undef %num;
+
+  read_file($srcdir, $func);
+
+  $s1 = ""; $s2 = "";
+  foreach $key (sort { $a <=> $b } keys %deflist_f) {
+    $s0 .= sprintf "%s %-30s %3s  /*%-70s*/\n", "#define ",
+      $deflist_f{$key}, $key, $deflist_c{$key};
+
+    $t = $deflist_f{$key};
+    $t =~ s/XC_(.*)/\L$1/;
+
+    $s4 .= ",\n" if($s4);
+    $s4 .= sprintf "{\"%s\", %d}", $t, $key;
+
+    $s3 .= sprintf "  %s %-30s = %3s  ! %s\n", "integer, parameter ::",
+      $deflist_f{$key}, $key, $deflist_c{$key};
+
+    $s5 .= sprintf "  %s %-30s = %3s  ! %s\n", "integer(c_int), parameter, public ::",
+      $deflist_f{$key}, $key, $deflist_c{$key};
+
+    $s1 .= "extern XC(func_info_type) XC(func_info_$t);\n";
+    $s2 .= "  &XC(func_info_$t),\n";
+  }
+
+  open(OUT, ">$builddir/funcs_$func.c") or die("Could not open '$builddir/funcs_$func.c'.\n");
+  print OUT <<EOF
+#include "util.h"
+
+$s1
+
+const XC(func_info_type) *XC(${func}_known_funct)[] = {
+$s2  NULL
+};
+EOF
+    ;
+  close OUT;
+}
+
+close DOCS;
+
+open(OUT, ">$builddir/funcs_key.c") or die("Could not open '$builddir/funcs_key.c'.\n");
+print OUT <<EOF
+#include "util.h"
+
+XC(functional_key_t) XC(functional_keys)[] = {
+$s4,
+{"", -1}
+};
+EOF
+;
+
+open(OUT, ">$builddir/xc_funcs.h") or die("Could not open '$builddir/xc_funcs.h'.\n");
+print OUT $s0;
+print $so;
+close OUT;
+
+open(OUT, ">$builddir/libxc_funcs.f90") or die("Could not open '$builddir/libxc_funcs.f90'.\n");
+print OUT <<EOF
+!! Copyright (C) 2003-2015 Miguel Marques
+!! All rights reserved.
+!!
+!! This file is dual-licensed under a GPL and a BSD license
+!!
+!! GPL License:
+!!
+!! This program is free software; you can redistribute it and/or modify
+!! it under the terms of the GNU Lesser General Public License as published by
+!! the Free Software Foundation; either version 2, or (at your option)
+!! any later version.
+!!
+!! This program is distributed in the hope that it will be useful,
+!! but WITHOUT ANY WARRANTY; without even the implied warranty of
+!! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!! GNU Lesser General Public License for more details.
+!!
+!! You should have received a copy of the GNU Lesser General Public License
+!! along with this program; if not, write to the Free Software
+!! Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+!! 02110-1301, USA.
+!!
+!! BSD License:
+!!
+!! Redistribution and use in source and binary forms, with or without
+!! modification, are permitted provided that the following conditions
+!! are met:
+!!
+!! 1. Redistributions of source code must retain the above copyright
+!! notice, this list of conditions and the following disclaimer.
+!!
+!! 2. Redistributions in binary form must reproduce the above
+!! copyright notice, this list of conditions and the following
+!! disclaimer in the documentation and/or other materials provided
+!! with the distribution.
+!!
+!! 3. Neither the name of the copyright holder nor the names of its
+!! contributors may be used to endorse or promote products derived
+!! from this software without specific prior written permission.
+!!
+!! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+!! "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+!! LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+!! FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+!! COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+!! INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+!! (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+!! SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+!! HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+!! STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+!! ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+!! OF THE POSSIBILITY OF SUCH DAMAGE.
+
+module libxc_funcs_m
+  implicit none
+
+  public
+
+$s3
+end module libxc_funcs_m
+EOF
+  ;
+close OUT;
+
+
+open(OUT, ">$builddir/libxc_inc.f03") or die("Could not open '$builddir/libxc_incs.f03'.\n");
+print OUT <<EOF
+$s5
+EOF
+  ;
+close OUT;
+
+open(OUT, ">$builddir/xc_set_params.h") or die("Could not open '$builddir/xc_set_params.h'.\n");
+print OUT <<EOF
+$xc_set_params
+EOF
+  ;
+close OUT;
+
+$publiclist = substr($publiclist, 0, -4);
+open(OUT, ">$builddir/libxc_set_params_inc.f03") or die("Could not open '$builddir/libxc_set_params_inc.f03'.\n");
+print OUT <<EOF
+  public :: &
+$publiclist
+
+  interface
+$xclist
+  end interface
+    
+contains
+
+$fxclist
+!! Local Variables:
+!! mode: f90
+!! coding: utf-8
+!! End:
+EOF
+  ;
+close OUT;
+
+open(OUT, ">$builddir/libxc_set_par_inc.f90") or die("Could not open '$builddir/libxc_set_par_inc.f90'.\n");
+print OUT <<EOF
+interface
+    
+$xcf90list
+end interface
+EOF
+  ;
+close OUT;
+
+open(OUT, ">$builddir/xc_f_inc.c") or die("Could not open '$builddir/xc_f_inc.c'.\n");
+print OUT <<EOF
+$xcfclist
+EOF
+  ;
+close OUT;
+
+sub read_file() {
+  my ($dir, $type) = @_;
+  $type =~ s/(.*)/\L$1/;
+
+  my $TYPE = $type;
+  $TYPE =~ s/(.*)/\U$1/;
+
+  # we remove the hyb from the filenames
+  $save_type = $type;
+  $type =~ s/^hyb_//;
+
+  opendir(DIR, "$dir/") || die "cannot opendir '$dir': $!";
+  while($_ = readdir(DIR)){
+    next if(!/^${type}_.*\.c$/ && !/^hyb_${type}_.*\.c$/ );
+
+    $file=$_;
+    open(IN, "<$dir/$_") or die("Could not open '$dir/$_'.\n");
+    while($_=<IN>){
+      if(/#define\s+(XC_${TYPE}_\S+)\s+(\S+)\s+\/\*(.*)\*\//){
+	$deflist_f{$2} = $1;
+	$deflist_c{$2} = $3;
+	$num{$1} = $2;
+
+        # check if ID is already in use
+        if ( $all_ids{$2} ){
+          printf stderr "Error: ID $2 repeated in\n  $1\n  $all_ids{$2}\n";
+          exit 1;
+        }else{
+          $all_ids{$2} = $1;
+        }
+      }
+
+      # only take one pass through; otherwise would be with and without 'hyb'
+      if($save_type !~ /^hyb/ && /XC\((.*)_set_params.?\)\(XC\(func_type\) \*p, (.*)\)/){
+	  chomp $_;
+	  $funcname = $1;
+	  @c_arguments = split(',', $2);
+	  
+	  if($_ !~ /void/) {
+	      $_ = "void $_";
+	  }
+	  if($_ =~ "set_params2") {
+	      $xcf90name = "${funcname}_set_par2";
+	      $xcf03name = "${funcname}_set_params2";
+	  } else {
+	      $xcf90name = "${funcname}_set_par";
+	      $xcf03name = "${funcname}_set_params";
+	  }
+	  $xc_set_params .= "/* $file, $funcname */ \n$_;\n";
+#	  system("grep '${funcname}_params' * > /dev/null || echo '${funcname}_params missing'");
+#	  system("../bin/xc-info $funcname > /dev/null || echo 'Functional $funcname not found'");
+
+	  $arg_name_list = "";
+	  $xc_args = "";
+	  $fxc_args = "";
+	  $xcfc_args = "";
+	  foreach $arg (@c_arguments) {
+	      ($var_type, $var_name) = split(' ', $arg);
+	      $arg_name_list .= $var_name . ", ";
+	      if($var_type =~ "int") {
+		  $xc_args .= "    integer(c_int), value  :: $var_name\n";
+		  $fxc_args .= "    integer,                 intent(in)    :: $var_name\n";
+		  $xcfc_args .= ", CC_FORTRAN_INT *$var_name";
+	      } elsif($var_type =~ "FLOAT") {
+		  $xc_args .= "    real(RTYPE),    value  :: $var_name\n";
+		  $fxc_args .= "    real(RTYPE),             intent(in)    :: $var_name\n";
+		  $xcfc_args .= ", FLOAT *$var_name";
+	      } else {
+		  print "WARNING: don't know how to handle type $var_type for interfaces.\n";
+	      }
+	  }
+	  $arg_name_list = substr($arg_name_list, 0, -2);
+	  
+	  $publiclist .= "    FXC($xcf03name), &\n";
+	  $xclist .= "  subroutine XC($xcf03name)(p, $arg_name_list) bind(c)\n";
+	  $xclist .= "    import\n";
+	  $xclist .= "    type(c_ptr),    value  :: p\n";
+	  $xclist .= $xc_args;
+	  $xclist .= "  end subroutine XC($xcf03name)\n";
+	  
+	  $fxclist .= "  subroutine FXC($xcf03name)(p, $arg_name_list)\n";
+	  $fxclist .= "    type(FXC(func_t)), intent(inout) :: p\n";
+	  $fxclist .= $fxc_args;
+	  $fxclist .= "\n    call XC($xcf03name)(p%ptr, $arg_name_list)\n\n";
+	  $fxclist .= "  end subroutine FXC($xcf03name)\n";
+	  $fxclist .= "\n";
+
+	  $xcf90list .= "  subroutine XC_F90($xcf90name)(p, $arg_name_list)\n";
+	  $xcf90list .= "    use XC_F90(types_m)\n";
+	  $xcf90list .= "    type(XC_F90(pointer_t)), intent(inout) :: p\n";
+	  $xcf90list .= $fxc_args;
+	  $xcf90list .= "  end subroutine XC_F90($xcf90name)\n\n";
+
+	  $xcfclist .= "void XC_FC_FUNC(f90_$xcf90name, " . uc("f90_$xcf90name") . ")\n";
+	  $xcfclist .= "  (void **p$xcfc_args)\n";
+	  $xcfclist .= "{\n";
+	  $xcfc_args =~ s/FLOAT //g;
+	  $xcfc_args =~ s/CC_FORTRAN_INT //g;
+	  $xcfclist .= "  XC($xcf03name)((XC(func_type) *)(*p)$xcfc_args);\n";
+	  $xcfclist .= "}\n\n";
+	  
+      }
+      
+      if(/^(const |)XC\(func_info_type\) XC\(func_info_${save_type}/){
+	  $infostr = "";
+	  while($_=<IN>){
+	      if(/([^}])*};/) { 
+		  $infostr .= $1;
+		  last;
+	      }
+	      # remove C comments
+	      $_ =~ s|/\*[^\*]*\*/||;
+	      # remove braces
+	      $_ =~ s/[{}]//g;
+	      chomp($_);
+	      $infostr .= $_;
+	  }
+	  @infos = split('"', $infostr);
+	  @infos0 = split(',', $infos[0]);
+	  $infos0[0] =~ s/^\s*//;
+	  $infos0[1] =~ s/^\s*//;
+	  @infos2 = split(',', $infos[2]);
+
+	  for($ii = 0; $ii <= $#infos2; $ii++) {
+	      # remove leading spaces
+	      $infos2[$ii] =~ s/^\s*//;
+	  }
+
+	  print DOCS "Number         : $num{$infos0[0]}\n";
+	  print DOCS "File           : $file\n";
+	  print DOCS "Codename       : $infos0[0]\n";
+	  print DOCS "Kind           : $infos0[1]\n";
+	  print DOCS "Description 1  : $infos[1]\n";
+	  $deflist_c{$num{$infos0[0]}} =~ s/^\s*//;
+	  $deflist_c{$num{$infos0[0]}} =~ s/\s*$//;
+	  if($deflist_c{$num{$infos0[0]}} ne $infos[1]) {
+	      print DOCS "Description 2  : $deflist_c{$num{$infos0[0]}}\n";
+	  }
+	  #infos2[0] will be blank
+	  print DOCS "Family         : $infos2[1]\n";
+
+	  if(-e "./xc-info" && -x "./xc-info") {
+	      $xc_info = `./xc-info $num{$infos0[0]}`;
+	      @refs = split('\n', $xc_info);
+	      if($refs[4] =~ /Reference\(s\)/) {
+		  print DOCS "References     : ";
+		  print DOCS $refs[5] . "\n";
+		  $ref_start = 6;
+	      } else {
+		  print DOCS $refs[4] . "\n";
+		  print DOCS "References     : ";
+		  print DOCS $refs[7] . "\n";
+		  $ref_start = 8;
+	      }
+	      for($ii = $ref_start; $ii <= $#refs; $ii++) {
+		  print DOCS "                 " . $refs[$ii] . "\n";
+	      }
+	  } else {
+	      # print only the names of the variables in references.c
+	      for($ii = 2; $ii <= 6; $ii++) {
+		  if($infos2[$ii] ne "NULL") {
+		      $infos2[$ii] =~ s/&xc_ref_//;
+		      print DOCS " $infos2[$ii]";
+		  }
+	      }
+	      print DOCS "\n";
+	  }
+
+	  if(($infos2[7] =~ /XC_FLAGS_(.)D/) != 1) {
+	      print STDERR "Must set exactly one dimensionality flag.\n";
+	      exit(1);
+	  }
+          print DOCS "Dimensionality : $1\n";
+	   
+	  print DOCS "Quantities     : ";
+	  @quantities = ($infos2[7] =~ /XC_FLAGS_HAVE_(.XC)/g);
+	  print DOCS join(" ", @quantities) . "\n";
+
+	  $infos2[7] =~ s/XC_FLAGS_.D//;
+	  $infos2[7] =~ s/XC_FLAGS_HAVE_.XC//g;
+	  $infos2[7] =~ s/\|//g;
+	  $infos2[7] =~ s/^\s*//;
+	  $infos2[7] =~ s/^s*$//;
+	  
+	  print DOCS "Other flags    : $infos2[7]\n";
+
+          $shortname = lc(substr($infos0[0], 3));
+          $set_params = `grep "XC(${shortname}_set_params)(XC(func_type)" $srcdir/$file`;
+	  chomp $set_params;
+	  if($set_params ne "") {
+	      if($set_params !~ /void/) {
+		  $set_params = "void $set_params";
+	      }
+	      print DOCS $set_params . "\n";
+	  }
+	  
+	  print DOCS "min dens       : $infos2[8]\n";
+	  print DOCS "min grad       : $infos2[9]\n";
+	  print DOCS "min tau        : $infos2[10]\n";
+	  print DOCS "min zeta       : $infos2[11]\n";
+	  print DOCS "init           : $infos2[12]\n";
+	  # apparently, the end is always NULL
+	  print DOCS "end            : $infos2[13]\n";
+	  print DOCS "work lda       : $infos2[14]\n";
+	  print DOCS "work gga       : $infos2[15]\n";
+	  print DOCS "work mgga      : $infos2[16]\n";
+	  print DOCS "----------------------------\n";
+
+#	  print "$file $infos0[0] $infos2[12]\n";
+
+	  if($num{$infos0[0]} eq "") {
+	      print STDERR "ERROR: missing number\n";
+              print STDERR $infos0[0], "\n";
+	      exit(1);
+	  }
+
+	  if($deflist_f{$num{$infos0[0]}} ne $infos0[0]) {
+	      print STDERR $deflist_f{$num{$infos0[0]}} . " " . $infos0[0] . "\n";
+	      print STDERR "Mismatch of names.\n";
+	      exit(1);
+	  }
+      }
+    }
+    close(IN);
+  }
+  closedir DIR;
+}
